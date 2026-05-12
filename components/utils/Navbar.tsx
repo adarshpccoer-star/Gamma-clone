@@ -1,9 +1,11 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { authClient } from "@/lib/auth-client";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -13,6 +15,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import Image from "next/image";
 
 const navItems = [
   { title: "Home", href: "/" },
@@ -22,9 +25,22 @@ const navItems = [
 ];
 
 export default function Navbar() {
+  // 1. Initialize state
+  const [user, setUser] = useState<any>(null);
+
+  // 2. Use useEffect to handle the async auth call
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data } = await authClient.getSession();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
+    fetchSession();
+  }, []); // Empty dependency array means this runs once on mount
+
   return (
-    <div className="sticky top-0 z-50 w-full flex justify-center p-4 ">
-      {/* Container with your custom Glass effect */}
+    <div className="sticky top-0 z-50 w-full flex justify-center p-4">
       <nav className="glass w-full max-w-7xl px-4 h-16 flex items-center justify-between rounded-2xl">
         <div className="flex items-center gap-2 m-3">
           <Link href="/" className="group flex items-center gap-1">
@@ -36,36 +52,58 @@ export default function Navbar() {
         </div>
 
         {/* Desktop Navigation */}
-       {/* Desktop Navigation */}
-<div className="hidden md:flex">
-  <NavigationMenu>
-    <NavigationMenuList>
-      {navItems.map((item) => (
-        <NavigationMenuItem key={item.title}>
-          {/* 1. We use asChild on the NavigationMenuLink */}
-          <NavigationMenuLink asChild>
-            <Link
-              href={item.href}
-              className={cn(
-                navigationMenuTriggerStyle(),
-                "bg-transparent"
-              )}
-            >
-              {item.title}
-            </Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-      ))}
-    </NavigationMenuList>
-  </NavigationMenu>
-</div>
+        <div className="hidden md:flex">
+          <NavigationMenu>
+            <NavigationMenuList>
+              {navItems.map((item) => (
+                <NavigationMenuItem key={item.title}>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        "bg-transparent"
+                      )}
+                    >
+                      {item.title}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" className="hidden md:flex">
-            Log in
-          </Button>
-          <Button className="rounded-full px-6">Get Started</Button>
+          {/* 3. Conditional Rendering based on Auth State */}
+          {user ? (
+            <>
+            <div>
+            <span className="flex items-center gap-2">
+                  <Image
+                  src={user.image}
+                  alt={user.name}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+              />
+                </span>
+             <Button variant="ghost" onClick={() => authClient.signOut()}>
+                Log out
+             </Button>
+             </div>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" className="hidden md:flex" asChild>
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button className="rounded-full px-6" asChild>
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </>
+          )}
 
           {/* Mobile Menu */}
           <div className="md:hidden">

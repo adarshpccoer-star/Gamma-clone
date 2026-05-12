@@ -4,17 +4,18 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Nav } from "react-day-picker";
 import Navbar from "@/components/utils/Navbar";
+import Providers from "./providers";
 
 // 1. Configure Fonts
 const instrumentSerifHeading = Instrument_Serif({
-  subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-heading'
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-heading",
 });
 
 const manrope = Manrope({
-  subsets: ['latin'],
-  variable: '--font-sans'
+  subsets: ["latin"],
+  variable: "--font-sans",
 });
 
 const geistMono = Geist_Mono({
@@ -35,17 +36,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-     suppressHydrationWarning={true}  // Recommended when using dark mode/themes
-      className=
-        "h-full antialiased scroll-smooth dark "
+      suppressHydrationWarning={true} // Recommended when using dark mode/themes
+      className="h-full antialiased scroll-smooth dark "
     >
-      <body className="h-full flex flex-col "> 
+      <body className="h-full flex flex-col ">
         {/* Navbar Container */}
-        <header className="shrink-0 z-50"> 
+        <header className="shrink-0 z-50">
           <Navbar />
         </header>
-      <main className="flex-1 relative mx-auto ">
-          {children}
+        <main className="flex-1 relative mx-auto ">
+          <Providers>{children}</Providers>{" "}
         </main>
       </body>
     </html>
