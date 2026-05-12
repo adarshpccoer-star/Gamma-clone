@@ -12,8 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { LAYOUT_OPTIONS, SLIDE_STYLES, TONE_OPTIONS } from "@/lib/presentationFeature/presentation-options";
 import { PRESENTATION_TEMPLATES } from "@/lib/presentationFeature/presentation-templates";
+import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPresentation } from "@/server-actions/PresentationServerActions";
+import { toast } from "sonner";
+import { presentationQueryKeys } from "@/hooks/query-keys";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const queryclient = useQueryClient();
+  const router = useRouter();
   const [form, setForm] = useState({
     content: '',
     slideCount: 8,
@@ -22,12 +29,35 @@ export default function Home() {
     layout: 'balanced',
   });
 
+   const createMut = useMutation({
+    mutationFn: () =>
+      createPresentation({
+        data: {
+          prompt: form.content.trim(),
+          slideCount: form.slideCount,
+          style: form.style,
+          tone: form.tone,
+          layout: form.layout,
+        },
+      }),
+    onSuccess: (presentation) => {
+      toast.success('Presentation created')
+      queryclient.invalidateQueries({ queryKey: presentationQueryKeys.list() })
+      router.push(`/Presentations/${presentation.id}`)
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Could not create presentation')
+    },
+  })
+
   // Mock pending state for the button UI
-  const isPending = false; 
 
   const handleGenerate = () => {
-    console.log("Generating with:", form);
-    // Add your mutation/API call logic here
+  if(!form.content.trim()){
+    toast.error('Please enter a topic or outline for your presentation.');
+  }else{
+    createMut.mutate();
+  }
   };
 
   return (
@@ -142,10 +172,10 @@ export default function Home() {
             <Button
               size="lg"
               onClick={handleGenerate}
-              disabled={isPending || !form.content.trim()}
+              disabled={createMut.isPending || !form.content.trim()}
               className="rounded-xl px-10 gap-2 font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
             >
-              {isPending ? (
+              {createMut.isPending ? (
                 <>
                   <Sparkles className="size-5 animate-pulse text-orange-300" />
                   Creating...

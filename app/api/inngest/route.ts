@@ -1,10 +1,10 @@
 import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
-import { processTask } from "@/inngest/function";
+import { generatePresentation } from "@/inngest/function";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
-    processTask,
+    generatePresentation,
   ],
 });
