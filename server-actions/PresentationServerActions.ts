@@ -9,8 +9,7 @@ import {
 } from "@/types/schemaVaildator";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { and, eq } from "drizzle-orm";
-import { da } from "date-fns/locale";
+import { and, asc, eq } from "drizzle-orm";
 import { inngest } from "@/inngest/client";
 export const checkauthorize = async () => {
   const session = await auth.api.getSession({
@@ -154,20 +153,44 @@ export const getPresentationWithSlides = async (data: any) => {
   try {
     const session = await checkauthorize();
     if (!session) throw new Error("Unauthorized");
+    console.log(data)
     const userID = session.user.id;
-   const row = await db.query.Presentation.findFirst({
-  where: (presentation, { and, eq }) => 
-    and(
-      eq(presentation.id, data?.id),
-      eq(presentation.userId, userID)
-    ),
-  with: {
-    slides: true,
-     // This matches the relation name in your schema
-  },
-});
-return JSON.parse(JSON.stringify(row));
+    const row = await db.query.Presentation.findFirst({
+      where: (presentation, { and, eq }) => 
+        and(
+          eq(presentation.id, data.data.id),
+          eq(presentation.userId, userID)
+        ),
+      with: { slides: true },
+    });
+console.log(row);
+    // Handle the case where no presentation is found
+    if (!row) {
+      return null; 
+    }
 
+    return JSON.parse(JSON.stringify(row));
+
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+      console.log(error);
+    } else {
+      throw new Error("unable to save presentation");
+    }
+  }
+};
+
+
+export const listPresentations = async () => {
+  try {
+    const session = await checkauthorize();
+    if (!session) throw new Error("Unauthorized");
+    const presentations = await db
+      .select()
+      .from(Presentation)
+      .where(eq(Presentation.userId, session.user.id));
+    return await db.select().from(Presentation).where(eq(Presentation.userId, session.user.id)).orderBy(asc(Presentation.updatedAt));
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(error.message);

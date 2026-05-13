@@ -1,2 +1,5 @@
-export type {Presentation as presentationType} from "@/db/schema/schema"
+import { Presentation } from "@/db/schema"
+import { InferSelectModel } from "drizzle-orm"
 
+
+export type presentationType = InferSelectModel<typeof Presentation>

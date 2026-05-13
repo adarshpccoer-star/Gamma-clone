@@ -1,65 +1,67 @@
 import { eq } from "drizzle-orm";
-import { inngest } from "./client"; 
+import { inngest } from "./client";
 import { db } from "@/db";
 import { Presentation, PresentationStatus, Slide } from "@/db/schema/schema";
 import { z } from "zod";
-import {Output,generateText} from "ai"
-import {google} from "@ai-sdk/google"
+import { Output, generateText } from "ai";
+import { google } from "@ai-sdk/google";
 
 function buildImageKitUrl(prompt: string, filename: string): string {
-  const baseUrl = process.env.IMAGEKIT_BASE_URL!
+  const baseUrl = process.env.IMAGEKIT_BASE_URL?.replace(/\/$/, ""); // Remove trailing slash
   const sanitizedPrompt = prompt
-    .replace(/[^\w\s-]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 100)
+    .slice(0, 150); // Increased limit; 100 might be too short for detail
 
-  return `${baseUrl}/ik-genimg-prompt-${encodeURIComponent(sanitizedPrompt)}/${filename}.jpg?tr=w-1280,h-720`
+  // Add the leading slash before ik-genimg
+  return `${baseUrl}/ik-genimg-prompt-${encodeURIComponent(sanitizedPrompt)}/${filename}.jpg?tr=w-1280,h-720`;
 }
 const slideSchema = z.object({
-  title: z.string().describe('Slide title'),
-  content: z.string().describe('Main content / bullet points for the slide'),
-  notes: z.string().optional().describe('Speaker notes'),
+  title: z.string().describe("Slide title"),
+  content: z.string().describe("Main content / bullet points for the slide"),
+  notes: z.string().optional().describe("Speaker notes"),
   imagePrompt: z
     .string()
     .describe(
-      'A concise prompt to generate an illustration for this slide (professional, clean style, no text in image)',
+      "A concise prompt to generate an illustration for this slide (professional, clean style, no text in image)",
     ),
-})
+});
 const slidesResponseSchema = z.object({
   slides: z.array(slideSchema),
-})
+});
 
 export const generatePresentation = inngest.createFunction(
-  { id: "generate-presentation", retries: 2, triggers: { event: "presentation/created" } },
+  {
+    id: "generate-presentation",
+    retries: 2,
+    triggers: { event: "presentation/generate" },
+  },
   async ({ event, step }) => {
-   const {presentationId}=event.data as {presentationId:string}
+    const { presentationId } = event.data as { presentationId: string };
 
-   const presentation = await step.run("fetch-presentation", async () => {
-     const p = await db.query.Presentation.findFirst({
-      where: (table, { eq }) => eq(table.id, presentationId), 
+    const presentation = await step.run("fetch-presentation", async () => {
+      const p = await db.query.Presentation.findFirst({
+        where: (table, { eq }) => eq(table.id, presentationId),
         with: {
           slides: true,
         },
       });
-      if (!p) throw new Error("Presentation not found"); 
- 
-return p
+      if (!p) throw new Error("Presentation not found");
 
-    })
-   await step.run("update-presentation-status", async () => {
+      return p;
+    });
+    await step.run("update-presentation-status", async () => {
       await db
         .update(Presentation)
-        .set({ 
+        .set({
           status: "GENERATING", // Or "COMPLETED" based on your logic
-          updatedAt: new Date() 
+          updatedAt: new Date(),
         })
         .where(eq(Presentation.id, presentationId));
     });
 
-
-
-    const {  slides } = await step.run('generate-slides-content', async () => {
+    const { slides } = await step.run("generate-slides-content", async () => {
       const systemPrompt = `You are an expert presentation designer. Given a user's content/prompt, create a compelling presentation.
 
 Style: ${Presentation?.style!}
@@ -73,23 +75,22 @@ Guidelines:
 - Last slide should be a summary or call-to-action
 - Keep content concise and impactful
 - For imagePrompt, describe a professional illustration that complements the slide (no text in images)
-`
+`;
 
       const result = await generateText({
-        model: google('gemini-2.5-flash'),
+        model: google("gemini-2.5-flash"),
         output: Output.object({ schema: slidesResponseSchema }),
         system: systemPrompt,
         prompt: presentation?.prompt!,
-      })
+      });
 
-      return result.output
-    })
- 
-   await step.run('delete-old-slides', async () => {
-    await db.delete(Presentation).where(eq(Presentation.id, presentationId))
-  })
+      return result.output;
+    });
 
-   await step.run('create-slides', async () => {
+    await step.run("delete-old-slides", async () => {
+      await db.delete(Slide).where(eq(Slide.presentationId, presentationId));
+    });
+    await step.run("create-slides", async () => {
       const data = slides.map((s, i) => ({
         presentationId,
         order: i,
@@ -97,17 +98,22 @@ Guidelines:
         content: s.content,
         notes: s.notes ?? null,
         imagePrompt: s.imagePrompt,
-        imageUrl: buildImageKitUrl(s.imagePrompt, `slide-${presentationId}-${i}`),
-      
-      }))
+        imageUrl: buildImageKitUrl(
+          s.imagePrompt,
+          `slide-${presentationId}-${i}`,
+        ),
+      }));
 
-      await db.insert(Slide).values(data)
-    })
+      await db.insert(Slide).values(data);
+    });
 
-   await step.run('mark-completed', async () => {
-      await db.update(Presentation).set({ status:"COMPLETED" }).where(eq(Presentation.id, presentationId))
-      
-      return { success: true, slideCount: slides.length }
-    })
+    await step.run("mark-completed", async () => {
+      await db
+        .update(Presentation)
+        .set({ status: "COMPLETED" })
+        .where(eq(Presentation.id, presentationId));
+
+      return { success: true, slideCount: slides.length };
+    });
   },
-)
+);
