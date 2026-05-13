@@ -1,3 +1,5 @@
+
+"use client"
 import {
   Card,
   CardDescription,
@@ -7,12 +9,13 @@ import {
 import Link from 'next/link'
 
 
-// import type { Presentation } from '../types/presentation.types'
-// import { presentationThumbnailUrl } from '../utils/thumbnail-url'
+import type { presentationType } from '@/types/presentation.types'
+import { presentationThumbnailUrl } from './utlis/thumbnail'
+import { promises } from 'dns'
 
-// type PresentationCardProps = {
-//   presentation: Presentation
-// }
+type PresentationCardProps = {
+  presentation: (presentationType)
+}
 
 export function PresentationCard({ presentation: p }:any
     //  PresentationCardProps
@@ -21,7 +24,7 @@ export function PresentationCard({ presentation: p }:any
     dateStyle: 'medium',
     timeStyle: 'short',
   })
-//   const thumb = presentationThumbnailUrl(p.id)
+  const thumb = presentationThumbnailUrl(p.id)
 
   return (
     <Link
@@ -31,13 +34,13 @@ export function PresentationCard({ presentation: p }:any
     >
       <Card className="h-full glass border-border/50 py-0 overflow-hidden transition-colors hover:border-primary/40">
         <div className="flex gap-4 p-4">
-          {/* <img
+          <img
             src={thumb}
             alt=""
             width={72}
             height={72}
             className="rounded-xl border border-border/50 shrink-0 bg-background/30"
-          /> */}
+          />
           <CardHeader className="p-0 gap-1 flex-1 min-w-0">
             <CardTitle className="text-base line-clamp-2">{p.title}</CardTitle>
             <CardDescription className="line-clamp-2">

@@ -12,11 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { LAYOUT_OPTIONS, SLIDE_STYLES, TONE_OPTIONS } from "@/lib/presentationFeature/presentation-options";
 import { PRESENTATION_TEMPLATES } from "@/lib/presentationFeature/presentation-templates";
-import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPresentation } from "@/server-actions/PresentationServerActions";
+import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPresentation, listPresentations } from "@/server-actions/PresentationServerActions";
 import { toast } from "sonner";
 import { presentationQueryKeys } from "@/hooks/query-keys";
 import { useRouter } from "next/navigation";
+import { PresentationListSection } from "@/components/PresentationComponent/PresentationList";
 
 export default function Home() {
   const queryclient = useQueryClient();
@@ -29,6 +30,10 @@ export default function Home() {
     layout: 'balanced',
   });
 
+  const {data:presentations=[],isPending:listPending} = useQuery({
+    queryKey: presentationQueryKeys.list(),
+    queryFn: () =>listPresentations(),
+  })
    const createMut = useMutation({
     mutationFn: () =>
       createPresentation({
@@ -64,7 +69,12 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex flex-1 w-full max-w-5xl flex-col items-center py-24 px-6 md:px-16">
         
-        {/* Header */}
+<PresentationListSection
+          presentations={presentations}
+          isPending={listPending}
+        />
+
+
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
             What do you want to{' '}
@@ -87,7 +97,7 @@ export default function Home() {
               placeholder="Describe your presentation topic, paste your notes, or outline your key points..."
               value={form.content}
               onChange={(e) => setForm((s) => ({ ...s, content: e.target.value }))}
-              className="h-[180px] text-base bg-background/50 border-border/50 rounded-2xl resize-none focus-visible:ring-primary/30 transition-all"
+              className="h-45 text-base bg-background/50 border-border/50 rounded-2xl resize-none focus-visible:ring-primary/30 transition-all"
             />
             <div className="flex justify-between text-xs text-muted-foreground px-1">
               <span>{form.content.length.toLocaleString()} characters</span>

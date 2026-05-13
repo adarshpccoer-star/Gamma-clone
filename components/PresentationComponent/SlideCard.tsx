@@ -1,5 +1,7 @@
+"use client"
 import { useState } from 'react'
 import { ImageIcon, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 type SlideCardProps = {
   slide: {
@@ -57,9 +59,10 @@ export function SlideCard({ slide, isActive, onClick }: SlideCardProps) {
                     </span>
                   </div>
                 )}
-                <img
+                <Image
                   src={slide.imageUrl}
                   alt={slide.title}
+                  fill
                   className={`w-full h-full object-cover transition-opacity ${
                     imageStatus === 'loaded' ? 'opacity-100' : 'opacity-0'
                   }`}

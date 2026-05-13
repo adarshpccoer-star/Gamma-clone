@@ -54,7 +54,7 @@ export default function Navbar() {
           <Link href="/" className="group flex items-center gap-1">
             <span className="relative text-gradient-peach italic text-4xl font-bold">
               G
-              <span className="absolute inset-x-0 top-1/2 h-[2px] bg-primary/30 -rotate-12" />
+              <span className="absolute inset-x-0 top-1/2 h-0.5 bg-primary/30 -rotate-12" />
             </span>
           </Link>
         </div>
@@ -91,7 +91,7 @@ export default function Navbar() {
                   <Image
                     src={userImage}
                     alt={user.name || "User"}
-                    fill
+                    fill sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
                   />
                 </div>

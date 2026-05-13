@@ -1,3 +1,4 @@
+"use client"
 import { Loader2, CheckCircle2, XCircle, FileEdit } from 'lucide-react'
 
 type GenerationStatusProps = {

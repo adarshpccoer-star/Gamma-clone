@@ -1,12 +1,11 @@
-// import type { Presentation } from '../types/presentation.types'
+"use client"
 
 import { PresentationCard } from "./presentationCard"
+import {presentationType} from "@/types/presentation.types"
 
-
-// import { PresentationCard } from './presentation-card'
 
 type PresentationListSectionProps = {
-//   presentations: Presentation[]
+  presentations: ( presentationType)[] ,
   isPending: boolean
 }
 
