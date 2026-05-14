@@ -7,15 +7,14 @@ import { Output, generateText } from "ai";
 import { google } from "@ai-sdk/google";
 
 function buildImageKitUrl(prompt: string, filename: string): string {
-  const baseUrl = process.env.IMAGEKIT_BASE_URL?.replace(/\/$/, ""); // Remove trailing slash
+  const baseUrl = process.env.IMAGEKIT_BASE_URL!
   const sanitizedPrompt = prompt
-    .replace(/[^\w\s-]/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[^\w\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 150); // Increased limit; 100 might be too short for detail
+    .slice(0, 100)
 
-  // Add the leading slash before ik-genimg
-  return `${baseUrl}/ik-genimg-prompt-${encodeURIComponent(sanitizedPrompt)}/${filename}.jpg?tr=w-1280,h-720`;
+  return `${baseUrl}/ik-genimg-prompt-${encodeURIComponent(sanitizedPrompt)}/${filename}.jpg?tr=w-1280,h-720`
 }
 const slideSchema = z.object({
   title: z.string().describe("Slide title"),
@@ -98,7 +97,7 @@ Guidelines:
         content: s.content,
         notes: s.notes ?? null,
         imagePrompt: s.imagePrompt,
-        imageUrl: buildImageKitUrl(
+        imageURL: buildImageKitUrl(
           s.imagePrompt,
           `slide-${presentationId}-${i}`,
         ),

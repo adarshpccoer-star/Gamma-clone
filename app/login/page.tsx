@@ -1,21 +1,19 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import React from 'react'
-import { redirect } from 'next/navigation';
-import LoginPage from '@/components/LoginPage';
-const page = () => {
-   const logined = async () =>{
-    const session = await auth.api.getSession({
-        headers: await headers(),
-      });
-    
-      if (session) {
-        redirect("/");
-      }
-    
-  }
+"use client"
 
+import React, { useEffect } from 'react'
+
+import LoginPage from '@/components/LoginPage';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
+const page = () => {
+  const router = useRouter();
+ const { data: session, isPending } = authClient.useSession();
  
+   useEffect(() => {
+  if (!isPending && session) {
+    router.push("/"); // or wherever your home is
+  }
+}, [session, isPending, router]);
   return (
     <div>
       <LoginPage/>

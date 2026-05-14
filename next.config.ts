@@ -10,6 +10,12 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'ik.imagekit.io',
+        port: '',
+        pathname: '/**', // This allows all paths under that hostname
+      },
+      {
+        protocol: 'https',
         hostname: 'api.dicebear.com', // Good to add since you're using it for fallbacks
         port: '',
         pathname: '/**',
